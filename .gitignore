@@ -1,0 +1,33 @@
+# Precomputed artifacts (large binary files — reproduce with precompute.py)
+artifacts/embeddings.npy
+artifacts/anchor_embeddings.npy
+artifacts/ids.npy
+artifacts/bm25_index.pkl
+artifacts/ltr_model.pkl
+artifacts/model_cache/
+
+# Keep the feature table and JSON indexes (small, useful for CI)
+# artifacts/feature_table.parquet
+# artifacts/bm25_ids.json
+# artifacts/anchor_labels.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+*.swp
+
+# submission.csv is committed as a hackathon deliverable
+
+# Jupyter
+.ipynb_checkpoints/

@@ -1,0 +1,297 @@
+# config.yaml — Runtime parameters for the redrob-ranker pipeline
+# Change weights here; re-run rank.py; no code changes needed.
+
+# ─────────────────────────────────────────────────────────────────────────────
+paths:
+  candidates:   "../candidates.jsonl"
+  artifacts:    "./artifacts"
+  output:       "./submission.csv"
+  rubric:       "./rubric.yaml"
+
+# Reference date for recency calculations (treat as "today" during ranking)
+today: "2026-06-19"
+
+random_seed: 42
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Embedding model (CPU-friendly; download once, cached in artifacts/)
+# ─────────────────────────────────────────────────────────────────────────────
+embedding:
+  model: "BAAI/bge-small-en-v1.5"
+  batch_size: 64     # optimal for MPS (Apple GPU) — gives ~137 texts/sec on M4
+  normalize: true
+  cache_dir: "./artifacts/model_cache"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BM25 parameters
+# ─────────────────────────────────────────────────────────────────────────────
+bm25:
+  k1: 1.5
+  b: 0.75
+  top_k: 200    # retrieve this many via BM25 for reranking; irrelevant after merge
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Base score weights (Stage C composite — 12 features)
+# These form the feature side; when LLM scores exist they blend at llm.blend_weight.
+# ─────────────────────────────────────────────────────────────────────────────
+weights:
+  role_fit_dense:       0.18   # cosine to JD anchor embeddings
+  role_fit_sparse:      0.22   # BM25 + phrase pattern score from career descriptions
+  evidence_eval:        0.10   # NDCG/MRR/MAP/A-B language in descriptions
+  product_ratio:        0.13   # fraction of career at product-AI companies
+  yoe_band:             0.08   # smooth bump around 5–8 yrs
+  tenure_stability:     0.04   # penalize many <18-mo stints
+  recent_handon:        0.06   # current role writes code (not pure architect)
+  location_fit:         0.06   # location preference score
+  skill_assessment:     0.07   # VERIFIED skill scores (not self-reported) — gold signal
+  notice_score:         0.03   # JD says sub-30-day notice preferred; 30+ "bar gets higher"
+  github_activity:      0.01   # open-source signal (JD lists as nice-to-have)
+  engagement_score:     0.02   # platform behavioral composite from all 23 signals
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Honeypot / internal-consistency detector thresholds
+# ─────────────────────────────────────────────────────────────────────────────
+consistency:
+  # skill_duration_to_career_ratio: if any skill duration > total_career_months * ratio → flag
+  skill_duration_ratio_threshold: 1.50
+  # yoe_to_career_months_ratio: if sum(tenures) > yoe * 12 * ratio → flag
+  yoe_high_ratio: 2.20
+  yoe_low_ratio:  0.25
+  # minimum expert-with-zero-duration skills to flag
+  expert_zero_min: 2
+  # minimum flags to apply the honeypot penalty multiplicatively
+  flags_for_penalty: 1
+  # per-flag multiplier reduction (multiplicative)
+  per_flag_penalty: 0.30    # e.g., 2 flags → 0.70 * 0.70 = 0.49
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Availability multiplier
+# ─────────────────────────────────────────────────────────────────────────────
+availability:
+  floor: 0.60
+  ceil:  1.00
+  recency_half_life_days: 60
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LLM semantic scoring (Claude Haiku, precompute-only — no network during ranking)
+# ─────────────────────────────────────────────────────────────────────────────
+llm:
+  model: "claude-haiku-4-5-20251001"
+  top_n_to_score: 5000        # score top-N candidates by fast feature score
+  max_concurrent: 25          # concurrent API calls during precompute
+  blend_weight: 0.40          # LLM contributes 40%, features 60% of final score
+  enabled: true               # set false to fall back to feature-only scoring
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LTR calibration (Stage D — LightGBM LambdaMART)
+# ─────────────────────────────────────────────────────────────────────────────
+ltr:
+  enabled: true
+  n_estimators: 200
+  num_leaves: 31
+  learning_rate: 0.05
+  min_child_samples: 10
+  pseudo_label_positive_threshold: 0.60   # hand-score above this → label 3 (relevant)
+  pseudo_label_negative_threshold: 0.15   # hand-score below this → label 0
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Top-N submission size
+# ─────────────────────────────────────────────────────────────────────────────
+submission:
+  top_n: 100
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Product-AI companies (used in product_ratio feature)
+# ─────────────────────────────────────────────────────────────────────────────
+product_ai_companies:
+  - "sarvam ai"
+  - "sarvam"
+  - "cred"
+  - "razorpay"
+  - "paytm"
+  - "zoho"
+  - "mad street den"
+  - "yellow.ai"
+  - "verloop"
+  - "unacademy"
+  - "nykaa"
+  - "freshworks"
+  - "swiggy"
+  - "zomato"
+  - "flipkart"
+  - "meesho"
+  - "ola"
+  - "rapido"
+  - "phonepe"
+  - "groww"
+  - "zepto"
+  - "blinkit"
+  - "myntra"
+  - "lenskart"
+  - "slice"
+  - "browserstack"
+  - "cleartax"
+  - "chargebee"
+  - "postman"
+  - "leadsquared"
+  - "darwinbox"
+  - "hasura"
+  - "setu"
+  - "signzy"
+  - "artivatic"
+  - "observe.ai"
+  - "sprinklr"
+  - "keka"
+  - "haptik"
+  - "juspay"
+  - "nium"
+  - "sharechat"
+  - "moj"
+  - "dailyhunt"
+  - "inmobi"
+  - "glance"
+  - "dream11"
+  - "mpokket"
+  - "smallcase"
+  - "niyo"
+  - "jupiter"
+  - "open financial"
+  - "khatabook"
+  - "dukaan"
+  - "okcredit"
+  - "kredivio"
+  - "klub"
+  - "fi money"
+  - "cred"
+  - "ofbusiness"
+  - "udaan"
+  - "moglix"
+  - "infra.market"
+  - "zetwerk"
+  - "shiprocket"
+  - "delhivery"
+  - "porter"
+  - "dunzo"
+  - "byjus"
+  - "upgrad"
+  - "vedantu"
+  - "toppr"
+  - "meritnation"
+  - "doubtnut"
+  - "lido"
+  - "eruditus"
+  - "great learning"
+  - "emeritus"
+  - "scaler"
+  - "coding ninjas"
+  - "healthifyme"
+  - "practo"
+  - "pristyn care"
+  - "clinikk"
+  - "doceree"
+  - "medibuddy"
+  - "niramai"
+  - "sigtuple"
+  - "5c network"
+  - "cure.fit"
+  - "cult.fit"
+  - "stanza living"
+  - "oyo"
+  - "mmt"
+  - "goibibo"
+  - "ixigo"
+  - "cleartrip"
+  - "yatra"
+  - "cars24"
+  - "droom"
+  - "spinny"
+  - "cardekho"
+  - "nestaway"
+  - "nobroker"
+  - "housing.com"
+  - "magicbricks"
+  - "99acres"
+  - "quikr"
+  - "locobuzz"
+  - "pubmatic"
+  - "moengage"
+  - "clevertap"
+  - "webengage"
+  - "insider.in"
+  - "netcore"
+  - "kaleyra"
+  - "gupshup"
+  - "exotel"
+  - "knowlarity"
+  - "ozonetel"
+  - "zipdial"
+  - "truecaller"
+  - "lokal"
+  - "vokal"
+  - "josh talks"
+  - "koo"
+  - "pepperfry"
+  - "urban ladder"
+  - "fabindia"
+  - "mamaearth"
+  - "boat"
+  - "bira"
+  - "wakefit"
+  - "craftsvilla"
+  - "tata cliq"
+  - "ajio"
+  - "snapdeal"
+  - "shopclues"
+  - "firstcry"
+  - "bewakoof"
+  - "fashinza"
+  - "bijnis"
+  - "dealshare"
+  - "juspay"
+  - "cashify"
+  - "croma"
+  - "ather energy"
+  - "ola electric"
+  - "bounce"
+  - "vogo"
+  - "yulu"
+  - "smytten"
+  - "plum"
+  - "acko"
+  - "digit"
+  - "go digit"
+  - "policybazaar"
+  - "bankbazaar"
+  - "paisabazaar"
+  - "coverfox"
+  - "turtlemint"
+  - "scripbox"
+  - "fisdom"
+  - "kuvera"
+  - "etmoney"
+  - "tickertape"
+  - "sensibull"
+  - "zerodha"
+  - "upstox"
+  - "5paisa"
+  - "angel broking"
+  - "angel one"
+  - "motilal oswal"
+  - "sharekhan"
+  - "iifl"
+  - "geeksforgeeks"
+  - "interviewbit"
+  - "codechef"
+  - "hackerrank"
+  - "hackerearth"
+  - "instahyre"
+  - "iimjobs"
+  - "hirist"
+  - "cutshort"
+  - "apna"
+  - "workindia"
+  - "jobhai"
+  - "naukri"
+  - "shine"
+  - "monster"
+  - "redrob"

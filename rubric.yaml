@@ -1,0 +1,281 @@
+# rubric.yaml — Distilled JD rubric for "Senior AI Engineer, Founding Team"
+# Version: 1.0  |  Role: Senior AI Engineer at a Series A talent-intelligence startup
+# This file encodes human/AI reasoning about what the role MEANS, not what it says.
+# It is produced ONCE, offline. Do NOT re-derive per candidate.
+
+role:
+  title: Senior AI Engineer
+  team: Founding team
+  stage: Series A
+  domain: Talent intelligence / HR-tech
+  visa_sponsorship: false   # no relocation sponsorship → international candidates must be down-weighted
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MUST-HAVE evidence (must appear in career_history descriptions or summary,
+# NOT just in skills[]).  Each maps to a phrase-pattern set used in features.py.
+# ─────────────────────────────────────────────────────────────────────────────
+must_haves:
+  - id: production_embeddings
+    label: "Production embeddings-based retrieval"
+    weight: 0.25
+    patterns:
+      - "sentence.transformer"
+      - "openai embedding"
+      - "bge"
+      - "e5"
+      - "embedding"
+      - "dense retrieval"
+      - "bi-encoder"
+      - "semantic search"
+      - "neural retrieval"
+      - "text embedding"
+
+  - id: vector_db_infra
+    label: "Vector DB / hybrid search infrastructure"
+    weight: 0.20
+    patterns:
+      - "pinecone"
+      - "weaviate"
+      - "qdrant"
+      - "milvus"
+      - "faiss"
+      - "opensearch"
+      - "elasticsearch"
+      - "annoy"
+      - "vector database"
+      - "vector store"
+      - "vector index"
+      - "hybrid search"
+      - "approximate nearest neighbour"
+      - "ann"
+
+  - id: ranking_system
+    label: "Shipped end-to-end ranking / search / recommendation system"
+    weight: 0.25
+    patterns:
+      - "ranking"
+      - "ranker"
+      - "learning to rank"
+      - "ltr"
+      - "lambdamart"
+      - "recommendation system"
+      - "recsys"
+      - "collaborative filtering"
+      - "matrix factorization"
+      - "retrieval"
+      - "information retrieval"
+      - "search relevance"
+      - "search ranking"
+      - "feed ranking"
+      - "personali[sz]"
+      - "candidate generation"
+
+  - id: eval_rigor
+    label: "Ranking-system evaluation experience (NDCG/MRR/MAP/A-B)"
+    weight: 0.15
+    patterns:
+      - "ndcg"
+      - "mrr"
+      - "\\bmap\\b"
+      - "a/b test"
+      - "ab test"
+      - "offline.*online"
+      - "online.*offline"
+      - "recall@"
+      - "precision@"
+      - "click-through"
+      - "ctr"
+      - "holdout"
+      - "evaluation metric"
+      - "relevance label"
+      - "graded relevance"
+
+  - id: strong_python
+    label: "Strong Python / real engineering"
+    weight: 0.15
+    patterns:
+      - "python"
+      - "pytorch"
+      - "tensorflow"
+      - "production api"
+      - "fastapi"
+      - "serving"
+      - "inference"
+      - "deployed"
+      - "microservice"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NICE-TO-HAVE bonuses (positive bonus, never a gate)
+# ─────────────────────────────────────────────────────────────────────────────
+nice_to_haves:
+  - id: llm_finetuning
+    label: "LLM fine-tuning (LoRA/QLoRA/PEFT)"
+    bonus: 0.05
+    patterns: ["lora", "qlora", "peft", "fine.tun", "instruction.tun", "rlhf"]
+
+  - id: learning_to_rank
+    label: "Learning-to-rank (XGBoost/LightGBM/neural)"
+    bonus: 0.05
+    patterns: ["xgboost", "lightgbm", "gbdt", "gradient boosting", "lambdamart", "ranknet"]
+
+  - id: hrtech_background
+    label: "HR-tech / recruiting / marketplace background"
+    bonus: 0.04
+    patterns: ["talent", "recruiting", "hiring", "marketplace", "job board", "staffing"]
+
+  - id: distributed_scale
+    label: "Distributed systems / large-scale inference"
+    bonus: 0.03
+    patterns: ["distributed", "sharding", "kafka", "spark", "large-scale", "billion"]
+
+  - id: opensource
+    label: "Open-source AI/ML contributions"
+    bonus: 0.03
+    patterns: ["open.source", "github", "hugging face", "contributor"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# EXPERIENCE BAND: soft Gaussian peak, not a hard filter
+# ─────────────────────────────────────────────────────────────────────────────
+experience_band:
+  ideal_low: 5
+  ideal_high: 8
+  ok_low: 3        # gentle penalty below this
+  ok_high: 12      # gentle penalty above this
+  hard_min: 1      # heavy penalty below
+  # Outliers (extraordinary evidence) can override; do not zero out
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LOCATION preferences (multiplicative modifier)
+# ─────────────────────────────────────────────────────────────────────────────
+location:
+  preferred:       # full score
+    - "Noida"
+    - "Pune"
+  welcome:         # 0.95
+    - "Hyderabad"
+    - "Mumbai"
+    - "Delhi"
+    - "Gurgaon"
+    - "Bangalore"
+    - "Bengaluru"
+  india_other:     # 0.87
+    - "India"      # catch-all for other Indian cities
+  outside_india:   # 0.40 (visa cost + no sponsorship)
+    relocate_bonus: 0.20   # if willing_to_relocate=true, add this back → 0.60
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STRONG NEGATIVES — multiplicative penalties (keep gradient, don't zero out)
+# ─────────────────────────────────────────────────────────────────────────────
+penalties:
+  keyword_stuffer:
+    label: "Non-technical title + AI skills only in skills[], absent from career descriptions"
+    multiplier: 0.10    # devastating; this is the main trap
+    conditions:
+      - non_tech_title: true
+      - ai_in_descriptions: false
+      - ai_skill_count: ">= 4"
+
+  all_consulting:
+    label: "Entire career at services firms (TCS/Infosys/Wipro/…)"
+    multiplier: 0.30    # heavy; allow if current role is product-AI adjacent
+    services_firms:
+      - "tcs"
+      - "tata consultancy"
+      - "infosys"
+      - "wipro"
+      - "accenture"
+      - "cognizant"
+      - "capgemini"
+      - "tech mahindra"
+      - "hcl"
+      - "mindtree"
+      - "lti"
+      - "mphasis"
+      - "l&t infotech"
+      - "hexaware"
+      - "niit"
+      - "syntel"
+      - "persistent"
+      - "birlasoft"
+
+  research_only:
+    label: "Pure academic/research career, no production deployment"
+    multiplier: 0.35
+    signals:
+      - "phd" # + no product company tenure
+      - "research paper"
+      - "published"
+      - "arxiv"
+      - "university"
+      - "academia"
+
+  cv_speech_robotics:
+    label: "CV / speech / robotics primary, no NLP/IR exposure"
+    multiplier: 0.45
+    patterns:
+      - "computer vision"
+      - "object detection"
+      - "yolo"
+      - "speech recognition"
+      - "asr"
+      - "tts"
+      - "text-to-speech"
+      - "robotics"
+      - "ros"
+      - "lidar"
+
+  llm_wrapper_only:
+    label: "Recent (<12 mo) LangChain/OpenAI wrapping only, no pre-LLM ML production"
+    multiplier: 0.50
+    # detected via: langchain in recent job ONLY + no ranking/retrieval/recsys in older jobs
+
+  title_chaser:
+    label: "Many <18-month stints, title-laddering across companies"
+    multiplier: 0.70
+    # detected via tenure analysis in features.py
+
+  senior_no_code:
+    label: "Senior/architect role 18+ months with no hands-on code signals"
+    multiplier: 0.75
+    patterns:
+      - "managed team"
+      - "led team"
+      - "head of"
+      - "vp of"
+      - "director of"
+      - "chief"
+
+  research_llm_wrapper:
+    label: "Mixed: research + only LangChain wrapping with zero retrieval production"
+    multiplier: 0.50
+
+  honeypot:
+    label: "Internal numerical contradiction (detected by consistency.py)"
+    multiplier: 0.05   # near-zero; may not be exactly 0 to keep ranking smooth
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BEHAVIORAL AVAILABILITY — multiplier range 0.60 – 1.00
+# ─────────────────────────────────────────────────────────────────────────────
+availability:
+  # All signals combined into a single multiplier clamped to [0.60, 1.00]
+  recency_weight: 0.35       # days since last_active_date (decays)
+  response_rate_weight: 0.30 # recruiter_response_rate
+  open_to_work_weight: 0.15  # open_to_work_flag
+  saved_recruiters_weight: 0.10  # saved_by_recruiters_30d (proxy for demand)
+  interview_rate_weight: 0.10    # interview_completion_rate
+  recency_half_life_days: 60     # exp decay; 60 days ≈ "recently active"
+  multiplier_floor: 0.60
+  multiplier_ceil: 1.00
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JD DENSE ANCHOR SENTENCES (embedded once in precompute.py)
+# Short sentences that represent "what the role needs," used for cosine similarity
+# ─────────────────────────────────────────────────────────────────────────────
+jd_anchors:
+  retrieval: "Building production semantic search and dense retrieval systems using sentence transformers and vector databases like Pinecone, Weaviate, or FAISS"
+  ranking: "Designing and shipping learning-to-rank and neural reranking pipelines with offline NDCG evaluation and online A/B testing"
+  recsys: "Building recommendation systems including collaborative filtering, matrix factorization, and two-tower models for personalized feeds"
+  search_infra: "Implementing hybrid search combining BM25 sparse retrieval with dense embedding retrieval and late interaction reranking"
+  eval_metrics: "Rigorous evaluation of ranking systems using NDCG, MRR, MAP, precision at k, and offline-to-online lift measurement"
+  product_scale: "Deploying AI ranking and search systems to millions of users at a product company, owning model quality and serving latency"
+  python_eng: "Strong Python engineering for ML: PyTorch, FastAPI, model serving, feature pipelines, and distributed data processing"

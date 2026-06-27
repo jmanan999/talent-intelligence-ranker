@@ -1,0 +1,97 @@
+# Redrob Hackathon — Submission Metadata
+
+team_name: "talent-intelligence-ranker"
+
+primary_contact:
+  name: "Manan Jain"
+  email: "jmanan999@gmail.com"
+  phone: "+919509458912"
+
+team_members:
+  - name: "Manan Jain"
+    email: "jmanan999@gmail.com"
+    role: "ML Engineer / Solo"
+
+github_repo: "https://github.com/jmanan999/talent-intelligence-ranker"
+
+sandbox_link: "https://huggingface.co/spaces/jmanan999/talent-intelligence-ranker"
+
+reproduce_command: |
+  # Step 1: Precompute embeddings and BM25 index (one-time, ~20-30 min)
+  python src/precompute.py --candidates ./candidates.jsonl
+  # Step 2: LLM semantic scoring of top 5000 candidates (optional, requires API key)
+  ANTHROPIC_API_KEY=<your-key> python run_llm_scoring.py --top-n 5000
+  # Step 3: Rank (≤5 min, CPU only, no network)
+  python src/rank.py --candidates ./candidates.jsonl --out ./submission.csv
+
+compute:
+  platform: "MacBook Pro M4"
+  cpu_cores: 10
+  ram_gb: 16
+  python_version: "3.11"
+  os: "macOS 26.0"
+  uses_gpu_for_inference: false         # rank step is CPU only
+  gpu_for_precompute: true              # MPS used for embedding 100K candidates
+  has_network_during_ranking: false     # rank step is fully offline
+  pre_computation_required: true
+  pre_computation_time_minutes: 30
+  llm_scoring_time_minutes: 5           # Claude Haiku async, 25 concurrent
+  rank_step_wall_seconds: 90            # measured on M4, CPU only
+
+ai_tools_used:
+  - "Claude (claude-haiku-4-5) — semantic scoring of top 5000 candidates in precompute phase"
+  - "Claude (claude-sonnet-4-6) — development assistance (architecture, code review)"
+
+ai_usage_summary: |
+  Claude Haiku (claude-haiku-4-5-20251001) is used EXCLUSIVELY in the precompute phase
+  to semantically score the top 5000 candidates on 4 dimensions: retrieval depth,
+  production quality, career trajectory, and antipattern absence. Scores are saved to
+  artifacts/llm_scores.parquet and loaded (not re-generated) at rank time.
+
+  This is architecturally equivalent to using a language model to generate embeddings —
+  the output is precomputed and cached; no LLM calls happen during the 5-minute rank step.
+
+  Claude Sonnet 4.6 was also used as a development assistant for architecture design.
+  All engineering decisions, feature weights, and evaluation methodology are human-designed.
+
+methodology_summary: |
+  Multi-stage hybrid candidate ranker with LLM semantic scoring as the crown signal.
+
+  Pipeline:
+  (1) PRECOMPUTE (offline, can use network):
+      - BGE-small-en embeddings (384-dim, L2-normalized) for all 100K candidates
+      - 7 JD anchor embeddings encoding what the role actually means
+      - BM25 index over career descriptions (descriptions weighted 3× over skills)
+      - Claude Haiku LLM scoring of top 5000 candidates on 4 semantic dimensions
+
+  (2) PARSING (in rank step):
+      - Extract all 23 redrob behavioral signals (not just 5 as in baseline)
+      - Compute notice period score (JD explicitly mentions sub-30-day preference)
+      - Compute verified skill assessment composite (gold signal: test scores vs. self-report)
+      - Compute platform engagement composite (12 signals combined)
+
+  (3) FEATURES (12 vectorized features):
+      - role_fit_dense (BGE cosine to JD anchors), role_fit_sparse (BM25)
+      - evidence_eval (NDCG/MRR/MAP language in career descriptions)
+      - product_ratio (career months at product companies vs. services)
+      - yoe_band (smooth peak at 5-9 yrs), tenure_stability, recent_handon
+      - location_fit, skill_assessment (verified), notice_score, github_activity, engagement
+
+  (4) SCORING (blended):
+      - If LLM scores available: 40% LLM + 60% features
+      - Always: × availability (9-signal multiplier) × consistency (honeypot) × 6 penalties
+
+  (5) PENALTIES (multiplicative, not hard filters):
+      - keyword_stuffer (0.10×), all_consulting (0.35×), cv_speech_primary (0.50×)
+      - llm_wrapper_only (0.55×), non_tech_no_retrieval (0.40×), international_no_relocate (0.50×)
+
+  Key design insight from JD: "The right answer involves reasoning about the gap between
+  what the JD says and what the JD means." The LLM scoring layer implements exactly this —
+  semantic understanding of career narratives rather than keyword pattern matching.
+
+declarations:
+  read_submission_spec: true
+  code_is_original_work: true
+  no_collusion: true
+  honeypot_check_done: true
+  reproduction_tested: true
