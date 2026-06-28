@@ -1,6 +1,6 @@
 # Redrob Hackathon — Submission Metadata
 
-team_name: "talent-intelligence-ranker"
+team_name: "Manan"
 
 primary_contact:
   name: "Manan Jain"
@@ -10,7 +10,11 @@ primary_contact:
 team_members:
   - name: "Manan Jain"
     email: "jmanan999@gmail.com"
-    role: "ML Engineer / Solo"
+    role: "ML Engineer"
+
+    name: "Manan Goel"
+    email: "manangoel682@gmail.com"
+    role: "AI/ML Engineer"
 
 github_repo: "https://github.com/jmanan999/talent-intelligence-ranker"
 
