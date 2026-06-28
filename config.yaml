@@ -3,7 +3,7 @@
 
 # ─────────────────────────────────────────────────────────────────────────────
 paths:
-  candidates:   "../candidates.jsonl"
+  candidates:   "./candidates.jsonl"
   artifacts:    "./artifacts"
   output:       "./submission.csv"
   rubric:       "./rubric.yaml"

@@ -318,7 +318,7 @@ def main():
 
     # ── Validate ──────────────────────────────────────────────────────────────
     if not args.no_validate:
-        validator = REPO_ROOT.parent / "validate_submission.py"
+        validator = REPO_ROOT / "validate_submission.py"
         if validator.exists():
             result = subprocess.run(
                 [sys.executable, str(validator), str(out_path)],
